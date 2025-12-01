@@ -24,7 +24,7 @@ function makeBall(x, y, colorIn){
     yVel: 0,
     xAcc: 0,
     yAcc: 0,
-    friction: 0.985,
+    friction: 1,
     elasticity: 0.7,
     color: colorIn,
     draw: function(){
@@ -73,11 +73,34 @@ function makeBall(x, y, colorIn){
       this.yVel = dY / 20;
     },
     check: function(o){
-      const padding = this.radius / 3;
-      const xZone = (this.xPos > o.x - padding) && (this.xPos < o.x + o.width + 2 * padding);
-      const yZone = (this.yPos > o.y + o.height) && (this.yPos < o.y + o.height + this.radius);
-      if(xZone && yZone) {
-        this.yVel = Math.abs(this.yVel * this.elasticity);
+      // find closest point on edge of rectangle
+      let closestX = this.xPos;                   // assume closest x point is same as circle center
+      let closestY = this.yPos;                   // assume closest y point is same as circle center
+      if (this.xPos < o.x) closestX = o.x;        // left edge is closer than initial assumption
+      else if (this.xPos > o.x + o.width) closestX = o.x+o.width;     // right edge is closer than initial assumption
+      if (this.yPos < o.y) closestY = o.y;        // top edge is closer than initial assumption
+      else if (this.yPos > o.y + o.height) closestY = o.y+o.height;     // bottom edge is closer than initial assumption
+      // find overlap distance
+      const dX = this.xPos - closestX;
+      const dY = this.yPos - closestY;
+      const distance = Math.hypot(dX, dY);
+      if (distance > this.radius) return false;   // no collision
+      
+      if (this.xPos < o.x + o.width / 2 && this.xPos + this.radius >= o.x){
+        this.xPos += (dX - this.radius) / distance;
+        this.xVel = -Math.abs(this.xVel * dX / distance);
+      }
+      if (this.xPos >= o.x + o.width / 2 && this.xPos - this.radius <= o.x + o.width){
+        this.xPos += (dX + this.radius) / distance;
+        this.xVel = Math.abs(this.xVel * dX / distance);
+      }
+      if (this.yPos < o.y + o.height / 2 && this.yPos + this.radius >= o.y){
+        this.yPos += (dY - this.radius) / distance;
+        this.yVel = -Math.abs(this.yVel * dY / distance);
+      }
+      if (this.yPos >= o.y + o.height / 2 && this.yPos - this.radius <= o.y + o.height){
+        this.yPos += (dY + this.radius) / distance;
+        this.yVel = Math.abs(this.yVel * dY / distance);
       }
     }
   };
